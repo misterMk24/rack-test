@@ -1,29 +1,51 @@
 require_relative 'middleware/parse_params'
 
 class App
-
+  
   def call(env)
-    params = Params.new(self).obtain_params(env)
-    parse_params = ParseParams.new(self, params: params).call(env)
+    params = Rack::Request.new(env).params['format']
+    return empty_params if params.nil? || params&.empty?
 
-    status = parse_params[:status]
-    headers = parse_params[:headers]
-    body = ["#{parse_params[:body]}\n"]
-
-    [status, headers, body]
+    @parse_params_instance = ParseParams.new(params)
+    @result = @parse_params_instance.call
+    case @result
+    when 'prohibited' then unknown_params
+    else success_params
+    end
   end
 
   private
 
-  def status
-    200
+  def success_params
+    send_answer(
+      body: ["#{@result}\n"],
+      status: 200,
+      headers: { 'Content-Type' => 'text/plain' }
+    )
   end
 
-  def headers
-    { 'Content-Type' => 'text/plain' }
+  def unknown_params
+    send_answer(
+      body: ["Unknown time format [#{@parse_params_instance.prohibited_params.join(', ')}]\n"],
+      status: 400,
+      headers: { 'Content-Type' => 'text/plain' }
+    )
   end
 
-  def body
+  def empty_params
+    send_answer(
+      body: ["Empty params\n"],
+      status: 400,
+      headers: { 'Content-Type' => 'text/plain' }
+    )
+  end
+
+  def send_answer(**args)
+    body = args[:body]
+    status = args[:status]
+    headers = args[:headers]
+    
+    [status, headers, body]
   end
 end
  

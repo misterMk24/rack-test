@@ -1,23 +1,35 @@
 class ParseParams
+  
+  attr_reader :prohibited_params
 
-  def initialize(app, **options)
-    @app = app
-    @params = options[:params]
+  def initialize(params)
+    @params = params
     @result = []
+    @prohibited_params = []
+    @clear_params = []
   end
 
-  def call(env)
-    headers = { 'Content-Type' => 'text/plain' }
-    parse_params
-    body = @result.join('-')
+  def call
+    @clear_params = @params.split(',')
+    return 'prohibited' unless permitted_params?
 
-    { status: 200, headers: headers, body: body }
+    parse_params
   end
 
   private
 
+  attr_writer :prohibited_params
+
+  PERMITTED_PARAMS = ['year', 'month', 'day', 'hour', 'minute', 'second']
+
   def parse_params
-    @params.each{ |param| @result << obtain_data(param) } 
+    @clear_params.each{ |param| @result << obtain_data(param) }
+    @result.join('-')
+  end
+
+  def permitted_params?
+    @clear_params.each { |param| @prohibited_params.push(param)  unless PERMITTED_PARAMS.include?(param) }
+    @prohibited_params.empty? ? true : false
   end
 
   def obtain_data(param)
