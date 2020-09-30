@@ -11,9 +11,12 @@ class ParseParams
 
   def call
     @clear_params = @params.split(',')
-    return 'prohibited' unless permitted_params?
-
     parse_params
+  end
+
+  def permitted_params?
+    @clear_params.each { |param| @prohibited_params.push(param)  unless PERMITTED_PARAMS.include?(param) }
+    @prohibited_params.empty? ? true : false
   end
 
   private
@@ -25,11 +28,6 @@ class ParseParams
   def parse_params
     @clear_params.each{ |param| @result << obtain_data(param) }
     @result.join('-')
-  end
-
-  def permitted_params?
-    @clear_params.each { |param| @prohibited_params.push(param)  unless PERMITTED_PARAMS.include?(param) }
-    @prohibited_params.empty? ? true : false
   end
 
   def obtain_data(param)

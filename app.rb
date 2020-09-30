@@ -8,10 +8,7 @@ class App
 
     @parse_params_instance = ParseParams.new(params)
     @result = @parse_params_instance.call
-    case @result
-    when 'prohibited' then unknown_params
-    else success_params
-    end
+    @parse_params_instance.permitted_params? ? success_params : unknown_params
   end
 
   private
