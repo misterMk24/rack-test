@@ -3,19 +3,18 @@ class ParseParams
   attr_reader :prohibited_params
 
   def initialize(params)
-    @params = params
     @result = []
     @prohibited_params = []
-    @clear_params = []
+    @params = params.split(',')
   end
 
-  def call
-    @clear_params = @params.split(',')
-    parse_params
+  def parse_params
+    @params.each{ |param| @result << obtain_data(param) }
+    @result.join('-')
   end
 
   def permitted_params?
-    @clear_params.each { |param| @prohibited_params.push(param)  unless PERMITTED_PARAMS.include?(param) }
+    @params.each { |param| @prohibited_params.push(param)  unless PERMITTED_PARAMS.include?(param) }
     @prohibited_params.empty? ? true : false
   end
 
@@ -25,21 +24,16 @@ class ParseParams
 
   PERMITTED_PARAMS = ['year', 'month', 'day', 'hour', 'minute', 'second']
 
-  def parse_params
-    @clear_params.each{ |param| @result << obtain_data(param) }
-    @result.join('-')
-  end
-
   def obtain_data(param)
-    time_array = Time.now.to_a
+    time_array = Time.now
     data = {
-      year: time_array[5], 
-      month: time_array[4], 
-      day: time_array[3],
-      hour: time_array[2],
-      minute: time_array[1],
-      second: time_array[0]
+      year: "%Y", 
+      month: "%m", 
+      day: "%d",
+      hour: "%H",
+      minute: "%M",
+      second: "%S"
     }
-    data[param.to_sym]
+    time_array.strftime(data[param.to_sym])
   end
 end
